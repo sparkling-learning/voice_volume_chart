@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="zh-HK">
+<html lang="zh-HK" style="font-size: 110%;">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -19,6 +19,22 @@
       user-select: none;
       -webkit-user-select: none;
       background: radial-gradient(circle at top left, #f0f9ff, #e0f2fe 40%, #f8fafc);
+    }
+
+    /* 喇叭搖晃發聲動畫 */
+    @keyframes speakerPulse {
+      0% { transform: scale(1) rotate(0deg); }
+      15% { transform: scale(1.25) rotate(-14deg); }
+      30% { transform: scale(1.25) rotate(14deg); }
+      45% { transform: scale(1.25) rotate(-10deg); }
+      60% { transform: scale(1.15) rotate(8deg); }
+      75% { transform: scale(1.05) rotate(-4deg); }
+      100% { transform: scale(1) rotate(0deg); }
+    }
+    .speaker-wave-anim {
+      display: inline-block;
+      animation: speakerPulse 1.8s ease-in-out infinite;
+      transform-origin: center bottom;
     }
 
     /* 柔和立體卡片陰影 */
@@ -98,7 +114,7 @@
   <!-- 頂部標題與雲朵提示 -->
   <header class="w-full max-w-4xl text-center my-2">
     <div class="inline-flex items-center gap-3 bg-white/95 backdrop-blur px-8 py-3.5 rounded-full border border-sky-200 shadow-sm">
-      <span class="text-3xl animate-bounce">📢</span>
+      <span class="text-3xl speaker-wave-anim">📢</span>
       <h1 class="text-2xl md:text-3xl font-black tracking-wide text-sky-950">我的聲量表</h1>
       <span class="text-xs md:text-sm px-3.5 py-1 bg-sky-100 text-sky-800 rounded-full font-bold">視覺提示咭</span>
     </div>
@@ -111,7 +127,6 @@
       
       <!-- 圖片展示容器 (0.png ~ 5.png) -->
       <div id="imgCardBox" class="relative w-72 h-72 md:w-88 md:h-88 bg-slate-50 border-4 rounded-3xl flex items-center justify-center p-4 transition-all duration-300 overflow-hidden shadow-inner">
-        <!-- 顯示圖片 -->
         <img 
           id="soundImage" 
           src="0.png" 
@@ -200,7 +215,7 @@
         </button>
         <button onclick="changeLevel(3)" class="level-btn py-2.5 px-1 rounded-2xl text-center border-2 transition-all duration-200 flex flex-col items-center gap-1 shadow-sm" data-level="3">
           <span class="text-xl font-black">3</span>
-          <span class="text-xs font-bold truncate max-w-full">室內較遠的位置</span>
+          <span class="text-xs font-bold truncate max-w-full">室內較遠</span>
         </button>
         <button onclick="changeLevel(4)" class="level-btn py-2.5 px-1 rounded-2xl text-center border-2 transition-all duration-200 flex flex-col items-center gap-1 shadow-sm" data-level="4">
           <span class="text-xl font-black">4</span>
@@ -221,7 +236,6 @@
   </footer>
 
   <script>
-    // 0 ~ 5 音量階層對應設定資料
     const levels = [
       {
         level: 0,
@@ -233,7 +247,7 @@
         themeColor: "#64748b",
         lightBg: "#f8fafc",
         border: "#cbd5e1",
-        freq: 261.63 // 音頻 Do
+        freq: 261.63
       },
       {
         level: 1,
@@ -245,7 +259,7 @@
         themeColor: "#0284c7",
         lightBg: "#f0f9ff",
         border: "#7dd3fc",
-        freq: 293.66 // Re
+        freq: 293.66
       },
       {
         level: 2,
@@ -257,7 +271,7 @@
         themeColor: "#16a34a",
         lightBg: "#f0fdf4",
         border: "#86efac",
-        freq: 329.63 // Mi
+        freq: 329.63
       },
       {
         level: 3,
@@ -269,7 +283,7 @@
         themeColor: "#d97706",
         lightBg: "#fffbeb",
         border: "#fde68a",
-        freq: 392.00 // Sol
+        freq: 392.00
       },
       {
         level: 4,
@@ -281,7 +295,7 @@
         themeColor: "#ea580c",
         lightBg: "#fff7ed",
         border: "#fdba74",
-        freq: 440.00 // La
+        freq: 440.00
       },
       {
         level: 5,
@@ -293,7 +307,7 @@
         themeColor: "#dc2626",
         lightBg: "#fef2f2",
         border: "#fca5a5",
-        freq: 523.25 // 高音 Do
+        freq: 523.25
       }
     ];
 
@@ -301,7 +315,6 @@
     let isSoundOn = true;
     let audioCtx = null;
 
-    // Web Audio API 提示音效
     function playBeep(frequency) {
       if (!isSoundOn) return;
       try {
@@ -325,63 +338,51 @@
 
         osc.start();
         osc.stop(audioCtx.currentTime + 0.2);
-      } catch (err) {
-        // 忽略瀏覽器尚未互動時的音訊策略
-      }
+      } catch (err) {}
     }
 
-    // 處理圖片遺失時的後備提示
     function handleImgError(imageEl) {
       imageEl.alt = `[請將 ${imageEl.getAttribute('src')} 放在此網頁同目錄]`;
       imageEl.classList.remove('object-contain');
     }
 
-    // 更新介面展示
     function changeLevel(lvl) {
       currentLevel = lvl;
       const data = levels[lvl];
 
-      // 1. 動態設置 CSS 自訂變數
       document.documentElement.style.setProperty('--theme-color', data.themeColor);
 
-      // 2. 更換圖片 (0.png ~ 5.png) 與微動效
       const img = document.getElementById('soundImage');
       img.classList.remove('card-img-enter');
-      void img.offsetWidth; // 觸發 reflow
+      void img.offsetWidth;
       img.src = data.img;
       img.classList.add('card-img-enter');
 
-      // 3. 圖片卡外框風格
       const imgCardBox = document.getElementById('imgCardBox');
       imgCardBox.style.borderColor = data.border;
       imgCardBox.style.backgroundColor = data.lightBg;
 
-      // 4. 左上角數字徽章
       const levelBadge = document.getElementById('levelBadge');
       levelBadge.textContent = data.level;
       levelBadge.style.backgroundColor = data.themeColor;
 
-      // 5. 文字與情境標籤
       const levelTitle = document.getElementById('levelTitle');
       levelTitle.textContent = data.title;
       levelTitle.style.color = data.themeColor;
       document.getElementById('levelDesc').textContent = data.desc;
       document.getElementById('contextText').textContent = data.context;
 
-      // 6. 情境小圖示
       const contextIcon = document.getElementById('contextIcon');
       contextIcon.className = data.icon;
       const contextIconBox = document.getElementById('contextIconBox');
       contextIconBox.style.backgroundColor = data.lightBg;
       contextIconBox.style.color = data.themeColor;
 
-      // 7. 更新滑桿背景色階與滑桿數值
       const slider = document.getElementById('volumeRange');
       slider.value = lvl;
       const percent = (lvl / 5) * 100;
       slider.style.background = `linear-gradient(to right, ${data.themeColor} 0%, ${data.themeColor} ${percent}%, #e2e8f0 ${percent}%, #e2e8f0 100%)`;
 
-      // 8. 更新各按鈕高亮狀態
       document.querySelectorAll('.level-btn').forEach(btn => {
         const btnLvl = parseInt(btn.getAttribute('data-level'));
         if (btnLvl === lvl) {
@@ -397,11 +398,9 @@
         }
       });
 
-      // 9. 播放音效
       playBeep(data.freq);
     }
 
-    // 監聽滑桿拖曳事件
     const slider = document.getElementById('volumeRange');
     slider.addEventListener('input', (e) => {
       const val = parseInt(e.target.value);
@@ -410,7 +409,6 @@
       }
     });
 
-    // 音效開關按鈕
     const soundToggleBtn = document.getElementById('soundToggleBtn');
     soundToggleBtn.addEventListener('click', () => {
       isSoundOn = !isSoundOn;
@@ -423,7 +421,6 @@
       }
     });
 
-    // 鍵盤左右鍵控制支援 (大螢幕/電子白板方便使用)
     window.addEventListener('keydown', (e) => {
       if (e.key === 'ArrowRight' || e.key === 'ArrowUp') {
         if (currentLevel < 5) changeLevel(currentLevel + 1);
@@ -432,66 +429,7 @@
       }
     });
 
-    // 頁面初始化
     changeLevel(0);
   </script>
-</body>
-</html>
-```eof
-
-### 檔案放置與使用指引：
-1. **存放於同一個資料夾**：
-   將上述程式碼儲存為 `index.html`，並將您的 6 張圖片（`0.png`、`1.png`、`2.png`、`3.png`、`4.png`、`5.png`）放在與 `index.html` 相同的資料夾。
-2. **直接雙擊開啟**：
-   使用任何瀏覽器（Chrome、Edge、Safari 等）或電子白板直接開啟 `index.html`。
-3. **互動模式**：
-   - 拖拉中央滑桿即可無縫切換圖片與音量等級。
-   - 點選底部的 0 至 5 號彩色方塊可快速直達。
-   - 支援鍵盤方向鍵 `←` 與 `→` 步進切換。根據您的需求，以下提供兩種常用語言（**HTML/JavaScript** 與 **Python**）的實作範例：
-
----
-
-### 方法一：網頁端實作（HTML + JavaScript）
-
-透過滑桿（Slider）調整音量數值（0 至 5），畫面會即時切換對應的圖片檔名 `${volume}.png`。
-
-```html
-<!DOCTYPE html>
-<html lang="zh-Hant">
-<head>
-    <meta charset="UTF-8">
-    <title>音量圖片切換</title>
-    <style>
-        body { font-family: sans-serif; text-align: center; margin-top: 50px; }
-        .image-box img { width: 260px; height: auto; border: 1px solid #ddd; border-radius: 8px; padding: 10px; }
-        .control-panel { margin-top: 20px; }
-    </style>
-</head>
-<body>
-
-    <div class="image-box">
-        <!-- 預設顯示音量 0 -->
-        <img id="volumeImg" src="0.png" alt="音量圖片">
-    </div>
-
-    <div class="control-panel">
-        <label for="volumeSlider">目前音量：<span id="volumeValue">0</span></label><br><br>
-        <input type="range" id="volumeSlider" min="0" max="5" value="0" step="1">
-    </div>
-
-    <script>
-        const slider = document.getElementById('volumeSlider');
-        const img = document.getElementById('volumeImg');
-        const text = document.getElementById('volumeValue');
-
-        // 監聽滑桿變動事件
-        slider.addEventListener('input', function() {
-            const vol = this.value;
-            text.textContent = vol;
-            // 動態對應 0.png 至 5.png
-            img.src = `${vol}.png`;
-        });
-    </script>
-
 </body>
 </html>
