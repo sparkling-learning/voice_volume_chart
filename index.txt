@@ -1,0 +1,497 @@
+<!DOCTYPE html>
+<html lang="zh-HK">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>我的聲量表 - 互動視覺提示咭</title>
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Font Awesome 圖示庫 -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+  <!-- Google Fonts 圓體字型 -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=M+PLUS+Rounded+1c:wght@500;700;800;900&family=Noto+Sans+TC:wght@400;500;700;900&display=swap" rel="stylesheet">
+
+  <style>
+    body {
+      font-family: 'M PLUS Rounded 1c', 'Noto Sans TC', sans-serif;
+      user-select: none;
+      -webkit-user-select: none;
+      background: radial-gradient(circle at top left, #f0f9ff, #e0f2fe 40%, #f8fafc);
+    }
+
+    /* 柔和立體卡片陰影 */
+    .soft-card-shadow {
+      box-shadow: 0 20px 40px -12px rgba(14, 165, 233, 0.12), 0 8px 20px -6px rgba(0, 0, 0, 0.06);
+    }
+
+    /* 自訂圓滑拖拉滑桿 */
+    .volume-range {
+      -webkit-appearance: none;
+      appearance: none;
+      height: 20px;
+      border-radius: 9999px;
+      outline: none;
+      transition: background 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+    .volume-range::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      appearance: none;
+      width: 48px;
+      height: 48px;
+      border-radius: 50%;
+      background: #ffffff;
+      cursor: grab;
+      box-shadow: 0 6px 18px rgba(0, 0, 0, 0.25);
+      border: 4px solid var(--theme-color, #0284c7);
+      transition: transform 0.15s ease, border-color 0.25s ease;
+    }
+    .volume-range::-webkit-slider-thumb:active {
+      cursor: grabbing;
+      transform: scale(1.18);
+    }
+    .volume-range::-moz-range-thumb {
+      width: 48px;
+      height: 48px;
+      border-radius: 50%;
+      background: #ffffff;
+      cursor: grab;
+      box-shadow: 0 6px 18px rgba(0, 0, 0, 0.25);
+      border: 4px solid var(--theme-color, #0284c7);
+      transition: transform 0.15s ease;
+    }
+
+    /* 雲朵形狀提示泡泡 */
+    .cloud-bubble-tip {
+      position: relative;
+      background: #ffffff;
+      border: 3.5px solid var(--theme-color, #38bdf8);
+      border-radius: 28px;
+      transition: all 0.3s ease;
+    }
+    .cloud-bubble-tip::before {
+      content: '';
+      position: absolute;
+      bottom: -15px;
+      left: 48px;
+      width: 22px;
+      height: 22px;
+      background: #ffffff;
+      border-bottom: 3.5px solid var(--theme-color, #38bdf8);
+      border-right: 3.5px solid var(--theme-color, #38bdf8);
+      transform: rotate(45deg);
+    }
+
+    /* 圖片淡入縮放微動效 */
+    .card-img-enter {
+      animation: popIn 0.35s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+    }
+    @keyframes popIn {
+      0% { opacity: 0.2; transform: scale(0.92); }
+      100% { opacity: 1; transform: scale(1); }
+    }
+  </style>
+</head>
+<body class="min-h-screen flex flex-col items-center justify-between p-4 md:p-8 text-slate-800">
+
+  <!-- 頂部標題與雲朵提示 -->
+  <header class="w-full max-w-4xl text-center my-2">
+    <div class="inline-flex items-center gap-3 bg-white/95 backdrop-blur px-8 py-3.5 rounded-full border border-sky-200 shadow-sm">
+      <span class="text-3xl animate-bounce">📢</span>
+      <h1 class="text-2xl md:text-3xl font-black tracking-wide text-sky-950">我的聲量表</h1>
+      <span class="text-xs md:text-sm px-3.5 py-1 bg-sky-100 text-sky-800 rounded-full font-bold">視覺提示咭</span>
+    </div>
+  </header>
+
+  <!-- 主互動舞台卡片 -->
+  <main class="w-full max-w-4xl bg-white/95 backdrop-blur rounded-3xl p-6 md:p-10 soft-card-shadow border border-white flex flex-col items-center my-auto">
+    
+    <div class="w-full flex flex-col md:flex-row items-center justify-center gap-6 md:gap-10 mb-8">
+      
+      <!-- 圖片展示容器 (0.png ~ 5.png) -->
+      <div id="imgCardBox" class="relative w-72 h-72 md:w-88 md:h-88 bg-slate-50 border-4 rounded-3xl flex items-center justify-center p-4 transition-all duration-300 overflow-hidden shadow-inner">
+        <!-- 顯示圖片 -->
+        <img 
+          id="soundImage" 
+          src="0.png" 
+          alt="聲量圖示" 
+          class="w-full h-full object-contain card-img-enter"
+          onerror="handleImgError(this)"
+        >
+
+        <!-- 左上角音量數字徽章 -->
+        <div id="levelBadge" class="absolute top-4 left-4 w-14 h-14 rounded-2xl flex items-center justify-center text-white text-3xl font-black shadow-lg transition-all duration-300">
+          0
+        </div>
+      </div>
+
+      <!-- 右側文字解說與情境雲朵框 -->
+      <div class="flex-1 w-full md:max-w-md flex flex-col justify-center">
+        
+        <!-- 雲朵提示框 -->
+        <div class="cloud-bubble-tip p-6 shadow-sm mb-5">
+          <div class="flex items-center gap-2 mb-2 text-xs md:text-sm font-bold tracking-wider uppercase text-slate-400">
+            <i class="fa-solid fa-volume-high" id="speakerIcon"></i>
+            <span>聲量級別說明</span>
+          </div>
+          <div id="levelTitle" class="text-3xl md:text-4xl font-black tracking-tight text-slate-900 transition-colors">
+            保持安靜
+          </div>
+          <p id="levelDesc" class="text-slate-600 text-base md:text-lg mt-2 font-medium leading-relaxed">
+            不發出任何聲音，全神貫注認真自修。
+          </p>
+        </div>
+
+        <!-- 建議場景卡片 -->
+        <div class="bg-slate-50/80 border border-slate-200/80 rounded-2xl p-4 flex items-center gap-4">
+          <div id="contextIconBox" class="w-12 h-12 rounded-xl bg-slate-200 text-slate-600 flex items-center justify-center text-2xl shrink-0 transition-colors">
+            <i id="contextIcon" class="fa-solid fa-book-open"></i>
+          </div>
+          <div>
+            <div class="text-xs text-slate-400 font-bold uppercase">適合使用的場景</div>
+            <div id="contextText" class="text-slate-800 font-bold text-base md:text-lg">自修看書、考試、安靜聆聽</div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- 音量控制調整面板 -->
+    <div class="w-full bg-slate-50/90 rounded-2xl p-6 border border-slate-200">
+      
+      <!-- 控制列頂部 -->
+      <div class="flex items-center justify-between mb-4">
+        <span class="text-sm font-bold text-slate-600 flex items-center gap-2">
+          <i class="fa-solid fa-hand-pointer text-sky-500"></i> 請滑動拉桿或直接點選數字：
+        </span>
+        <!-- 音效切換 -->
+        <button id="soundToggleBtn" class="text-xs bg-white hover:bg-slate-100 text-slate-600 px-3.5 py-1.5 rounded-full border border-slate-300 font-bold transition flex items-center gap-2 shadow-sm">
+          <i class="fa-solid fa-bell text-sky-500"></i> 音效提示開
+        </button>
+      </div>
+
+      <!-- 拖拉式音量 Slider -->
+      <div class="px-2 mb-6">
+        <input 
+          type="range" 
+          id="volumeRange" 
+          min="0" 
+          max="5" 
+          step="1" 
+          value="0" 
+          class="volume-range w-full cursor-pointer bg-slate-200"
+        >
+      </div>
+
+      <!-- 快速點選按鈕矩陣 (0 ~ 5) -->
+      <div class="grid grid-cols-6 gap-2 md:gap-3">
+        <button onclick="changeLevel(0)" class="level-btn py-2.5 px-1 rounded-2xl text-center border-2 transition-all duration-200 flex flex-col items-center gap-1 shadow-sm" data-level="0">
+          <span class="text-xl font-black">0</span>
+          <span class="text-xs font-bold truncate max-w-full">保持安靜</span>
+        </button>
+        <button onclick="changeLevel(1)" class="level-btn py-2.5 px-1 rounded-2xl text-center border-2 transition-all duration-200 flex flex-col items-center gap-1 shadow-sm" data-level="1">
+          <span class="text-xl font-black">1</span>
+          <span class="text-xs font-bold truncate max-w-full">說秘密</span>
+        </button>
+        <button onclick="changeLevel(2)" class="level-btn py-2.5 px-1 rounded-2xl text-center border-2 transition-all duration-200 flex flex-col items-center gap-1 shadow-sm" data-level="2">
+          <span class="text-xl font-black">2</span>
+          <span class="text-xs font-bold truncate max-w-full">身旁人</span>
+        </button>
+        <button onclick="changeLevel(3)" class="level-btn py-2.5 px-1 rounded-2xl text-center border-2 transition-all duration-200 flex flex-col items-center gap-1 shadow-sm" data-level="3">
+          <span class="text-xl font-black">3</span>
+          <span class="text-xs font-bold truncate max-w-full">室內遠</span>
+        </button>
+        <button onclick="changeLevel(4)" class="level-btn py-2.5 px-1 rounded-2xl text-center border-2 transition-all duration-200 flex flex-col items-center gap-1 shadow-sm" data-level="4">
+          <span class="text-xl font-black">4</span>
+          <span class="text-xs font-bold truncate max-w-full">室外玩耍</span>
+        </button>
+        <button onclick="changeLevel(5)" class="level-btn py-2.5 px-1 rounded-2xl text-center border-2 transition-all duration-200 flex flex-col items-center gap-1 shadow-sm" data-level="5">
+          <span class="text-xl font-black">5</span>
+          <span class="text-xs font-bold truncate max-w-full">叫救命</span>
+        </button>
+      </div>
+
+    </div>
+
+  </main>
+
+  <footer class="text-center text-xs text-slate-400 font-medium my-2">
+    💡 提示：將網頁與 0.png ~ 5.png 放在同一個資料夾內即可正常顯示圖片。亦可使用鍵盤方向鍵 ← / → 切換音量！
+  </footer>
+
+  <script>
+    // 0 ~ 5 音量階層對應設定資料
+    const levels = [
+      {
+        level: 0,
+        img: "0.png",
+        title: "保持安靜",
+        desc: "不發出任何聲音，嘴巴閉閉「噓—」，專心自修做功課。",
+        context: "自修看書、安靜寫字、考試時",
+        icon: "fa-solid fa-book-open",
+        themeColor: "#64748b",
+        lightBg: "#f8fafc",
+        border: "#cbd5e1",
+        freq: 261.63 // 音頻 Do
+      },
+      {
+        level: 1,
+        img: "1.png",
+        title: "說秘密",
+        desc: "用耳語輕輕說話，用手掩嘴，只有貼近耳邊的人才能聽見。",
+        context: "跟同桌說悄悄話、私下互相提醒",
+        icon: "fa-solid fa-ear-listen",
+        themeColor: "#0284c7",
+        lightBg: "#f0f9ff",
+        border: "#7dd3fc",
+        freq: 293.66 // Re
+      },
+      {
+        level: 2,
+        img: "2.png",
+        title: "和身旁人說話",
+        desc: "平常溫和對話的音量，坐在旁邊或同組的同學清楚聽到即可。",
+        context: "同桌討論題目、分組活動合作",
+        icon: "fa-solid fa-user-group",
+        themeColor: "#16a34a",
+        lightBg: "#f0fdf4",
+        border: "#86efac",
+        freq: 329.63 // Mi
+      },
+      {
+        level: 3,
+        img: "3.png",
+        title: "室內距離遠",
+        desc: "清脆響亮的大聲發言，讓整間課室或全班師生都聽得到。",
+        context: "起立向全班發言、老師朗讀講書",
+        icon: "fa-solid fa-chalkboard-user",
+        themeColor: "#d97706",
+        lightBg: "#fffbeb",
+        border: "#fde68a",
+        freq: 392.00 // Sol
+      },
+      {
+        level: 4,
+        img: "4.png",
+        title: "室外玩耍",
+        desc: "在戶外操場遊樂場盡情跑跳玩耍，聲音可以響亮開朗！",
+        context: "操場體育課、小息戶外攀爬架遊玩",
+        icon: "fa-solid fa-tree",
+        themeColor: "#ea580c",
+        lightBg: "#fff7ed",
+        border: "#fdba74",
+        freq: 440.00 // La
+      },
+      {
+        level: 5,
+        img: "5.png",
+        title: "叫救命",
+        desc: "遇到危險、意外或受傷時，用盡全力大聲呼叫「救命啊！」",
+        context: "緊急意外、遇險求助、保護生命",
+        icon: "fa-solid fa-triangle-exclamation",
+        themeColor: "#dc2626",
+        lightBg: "#fef2f2",
+        border: "#fca5a5",
+        freq: 523.25 // 高音 Do
+      }
+    ];
+
+    let currentLevel = 0;
+    let isSoundOn = true;
+    let audioCtx = null;
+
+    // Web Audio API 提示音效
+    function playBeep(frequency) {
+      if (!isSoundOn) return;
+      try {
+        if (!audioCtx) {
+          audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        }
+        if (audioCtx.state === 'suspended') {
+          audioCtx.resume();
+        }
+        const osc = audioCtx.createOscillator();
+        const gain = audioCtx.createGain();
+        
+        osc.type = currentLevel >= 4 ? 'triangle' : 'sine';
+        osc.frequency.setValueAtTime(frequency, audioCtx.currentTime);
+
+        gain.gain.setValueAtTime(0.12, audioCtx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.2);
+
+        osc.connect(gain);
+        gain.connect(audioCtx.destination);
+
+        osc.start();
+        osc.stop(audioCtx.currentTime + 0.2);
+      } catch (err) {
+        // 忽略瀏覽器尚未互動時的音訊策略
+      }
+    }
+
+    // 處理圖片遺失時的後備提示
+    function handleImgError(imageEl) {
+      imageEl.alt = `[請將 ${imageEl.getAttribute('src')} 放在此網頁同目錄]`;
+      imageEl.classList.remove('object-contain');
+    }
+
+    // 更新介面展示
+    function changeLevel(lvl) {
+      currentLevel = lvl;
+      const data = levels[lvl];
+
+      // 1. 動態設置 CSS 自訂變數
+      document.documentElement.style.setProperty('--theme-color', data.themeColor);
+
+      // 2. 更換圖片 (0.png ~ 5.png) 與微動效
+      const img = document.getElementById('soundImage');
+      img.classList.remove('card-img-enter');
+      void img.offsetWidth; // 觸發 reflow
+      img.src = data.img;
+      img.classList.add('card-img-enter');
+
+      // 3. 圖片卡外框風格
+      const imgCardBox = document.getElementById('imgCardBox');
+      imgCardBox.style.borderColor = data.border;
+      imgCardBox.style.backgroundColor = data.lightBg;
+
+      // 4. 左上角數字徽章
+      const levelBadge = document.getElementById('levelBadge');
+      levelBadge.textContent = data.level;
+      levelBadge.style.backgroundColor = data.themeColor;
+
+      // 5. 文字與情境標籤
+      const levelTitle = document.getElementById('levelTitle');
+      levelTitle.textContent = data.title;
+      levelTitle.style.color = data.themeColor;
+      document.getElementById('levelDesc').textContent = data.desc;
+      document.getElementById('contextText').textContent = data.context;
+
+      // 6. 情境小圖示
+      const contextIcon = document.getElementById('contextIcon');
+      contextIcon.className = data.icon;
+      const contextIconBox = document.getElementById('contextIconBox');
+      contextIconBox.style.backgroundColor = data.lightBg;
+      contextIconBox.style.color = data.themeColor;
+
+      // 7. 更新滑桿背景色階與滑桿數值
+      const slider = document.getElementById('volumeRange');
+      slider.value = lvl;
+      const percent = (lvl / 5) * 100;
+      slider.style.background = `linear-gradient(to right, ${data.themeColor} 0%, ${data.themeColor} ${percent}%, #e2e8f0 ${percent}%, #e2e8f0 100%)`;
+
+      // 8. 更新各按鈕高亮狀態
+      document.querySelectorAll('.level-btn').forEach(btn => {
+        const btnLvl = parseInt(btn.getAttribute('data-level'));
+        if (btnLvl === lvl) {
+          btn.style.backgroundColor = data.themeColor;
+          btn.style.borderColor = data.themeColor;
+          btn.style.color = '#ffffff';
+          btn.style.transform = 'scale(1.06)';
+        } else {
+          btn.style.backgroundColor = '#ffffff';
+          btn.style.borderColor = '#e2e8f0';
+          btn.style.color = '#475569';
+          btn.style.transform = 'scale(1)';
+        }
+      });
+
+      // 9. 播放音效
+      playBeep(data.freq);
+    }
+
+    // 監聽滑桿拖曳事件
+    const slider = document.getElementById('volumeRange');
+    slider.addEventListener('input', (e) => {
+      const val = parseInt(e.target.value);
+      if (val !== currentLevel) {
+        changeLevel(val);
+      }
+    });
+
+    // 音效開關按鈕
+    const soundToggleBtn = document.getElementById('soundToggleBtn');
+    soundToggleBtn.addEventListener('click', () => {
+      isSoundOn = !isSoundOn;
+      if (isSoundOn) {
+        soundToggleBtn.innerHTML = '<i class="fa-solid fa-bell text-sky-500"></i> 音效提示開';
+        soundToggleBtn.classList.remove('opacity-60');
+      } else {
+        soundToggleBtn.innerHTML = '<i class="fa-solid fa-bell-slash text-slate-400"></i> 音效已靜音';
+        soundToggleBtn.classList.add('opacity-60');
+      }
+    });
+
+    // 鍵盤左右鍵控制支援 (大螢幕/電子白板方便使用)
+    window.addEventListener('keydown', (e) => {
+      if (e.key === 'ArrowRight' || e.key === 'ArrowUp') {
+        if (currentLevel < 5) changeLevel(currentLevel + 1);
+      } else if (e.key === 'ArrowLeft' || e.key === 'ArrowDown') {
+        if (currentLevel > 0) changeLevel(currentLevel - 1);
+      }
+    });
+
+    // 頁面初始化
+    changeLevel(0);
+  </script>
+</body>
+</html>
+```eof
+
+### 檔案放置與使用指引：
+1. **存放於同一個資料夾**：
+   將上述程式碼儲存為 `index.html`，並將您的 6 張圖片（`0.png`、`1.png`、`2.png`、`3.png`、`4.png`、`5.png`）放在與 `index.html` 相同的資料夾。
+2. **直接雙擊開啟**：
+   使用任何瀏覽器（Chrome、Edge、Safari 等）或電子白板直接開啟 `index.html`。
+3. **互動模式**：
+   - 拖拉中央滑桿即可無縫切換圖片與音量等級。
+   - 點選底部的 0 至 5 號彩色方塊可快速直達。
+   - 支援鍵盤方向鍵 `←` 與 `→` 步進切換。根據您的需求，以下提供兩種常用語言（**HTML/JavaScript** 與 **Python**）的實作範例：
+
+---
+
+### 方法一：網頁端實作（HTML + JavaScript）
+
+透過滑桿（Slider）調整音量數值（0 至 5），畫面會即時切換對應的圖片檔名 `${volume}.png`。
+
+```html
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+    <meta charset="UTF-8">
+    <title>音量圖片切換</title>
+    <style>
+        body { font-family: sans-serif; text-align: center; margin-top: 50px; }
+        .image-box img { width: 260px; height: auto; border: 1px solid #ddd; border-radius: 8px; padding: 10px; }
+        .control-panel { margin-top: 20px; }
+    </style>
+</head>
+<body>
+
+    <div class="image-box">
+        <!-- 預設顯示音量 0 -->
+        <img id="volumeImg" src="0.png" alt="音量圖片">
+    </div>
+
+    <div class="control-panel">
+        <label for="volumeSlider">目前音量：<span id="volumeValue">0</span></label><br><br>
+        <input type="range" id="volumeSlider" min="0" max="5" value="0" step="1">
+    </div>
+
+    <script>
+        const slider = document.getElementById('volumeSlider');
+        const img = document.getElementById('volumeImg');
+        const text = document.getElementById('volumeValue');
+
+        // 監聽滑桿變動事件
+        slider.addEventListener('input', function() {
+            const vol = this.value;
+            text.textContent = vol;
+            // 動態對應 0.png 至 5.png
+            img.src = `${vol}.png`;
+        });
+    </script>
+
+</body>
+</html>
