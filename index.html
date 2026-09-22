@@ -238,7 +238,7 @@
           <!-- 灰色底座直角三角形 -->
           <div class="triangle-bg"></div>
 
-          <!-- 同等大小的彩色三角形，透過外層裁切確保斜度完全吻合 -->
+          <!-- 彩色填充層 -->
           <div id="triangleFillWrapper" class="triangle-fill-wrapper">
             <div id="triangleFill" class="triangle-fill"></div>
           </div>
@@ -437,10 +437,13 @@
       contextIconBox.style.backgroundColor = data.lightBg;
       contextIconBox.style.color = data.themeColor;
 
+      // 1 號圖形定點右移 5%：由 20% 增至 25% (其他級別維持等分比例)
+      const fillPercentageMap = [0, 25, 40, 60, 80, 100];
+      const percent = fillPercentageMap[lvl];
+      const rightInset = 100 - percent;
+
       const slider = document.getElementById('volumeRange');
       slider.value = lvl;
-      const percent = (lvl / 5) * 100;
-      const rightInset = 100 - percent;
       
       const fillWrapper = document.getElementById('triangleFillWrapper');
       fillWrapper.style.clipPath = `inset(0 ${rightInset}% 0 0)`;
