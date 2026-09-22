@@ -46,9 +46,10 @@
     .triangle-container {
       position: relative;
       width: 100%;
-      height: 48px;
+      height: 52px;
     }
-    /* 底層淺灰直角三角形 (左細右闊) */
+
+    /* 底層淺灰直角三角形 (左尖右高：直角在右下角) */
     .triangle-bg {
       position: absolute;
       top: 0;
@@ -57,18 +58,31 @@
       height: 100%;
       background: #e2e8f0;
       clip-path: polygon(0% 100%, 100% 0%, 100% 100%);
-      border-radius: 0 0 12px 0;
+      border-radius: 0 0 10px 0;
     }
-    /* 彩色填充層 (隨音量進度自左往右填滿) */
-    .triangle-fill {
+
+    /* 
+      外層裁剪容器：大小位置與 triangle-bg 100% 重疊
+      透過 clip-path: inset(...) 由右向左裁剪，保證斜邊斜率完全重疊不變形
+    */
+    .triangle-fill-wrapper {
       position: absolute;
       top: 0;
       left: 0;
-      width: 0%;
+      width: 100%;
+      height: 100%;
+      clip-path: inset(0 100% 0 0); /* 預設完全裁掉 (音量 0) */
+      transition: clip-path 0.28s cubic-bezier(0.4, 0, 0.2, 1);
+      pointer-events: none;
+    }
+
+    /* 實體彩色三角形：與底座幾何形狀一致 */
+    .triangle-fill {
+      width: 100%;
       height: 100%;
       background: var(--theme-color, #64748b);
       clip-path: polygon(0% 100%, 100% 0%, 100% 100%);
-      transition: width 0.25s cubic-bezier(0.4, 0, 0.2, 1), background-color 0.25s ease;
+      transition: background-color 0.25s ease;
     }
 
     /* 覆蓋於三角形上方的透明自訂滑桿 */
@@ -94,7 +108,7 @@
       border-radius: 50%;
       background: #ffffff;
       cursor: grab;
-      box-shadow: 0 6px 16px rgba(0, 0, 0, 0.3);
+      box-shadow: 0 6px 16px rgba(0, 0, 0, 0.25);
       border: 4px solid var(--theme-color, #0284c7);
       transition: transform 0.15s ease, border-color 0.25s ease;
     }
@@ -108,7 +122,7 @@
       border-radius: 50%;
       background: #ffffff;
       cursor: grab;
-      box-shadow: 0 6px 16px rgba(0, 0, 0, 0.3);
+      box-shadow: 0 6px 16px rgba(0, 0, 0, 0.25);
       border: 4px solid var(--theme-color, #0284c7);
       transition: transform 0.15s ease;
     }
@@ -221,13 +235,17 @@
         </button>
       </div>
 
-      <!-- 直角三角形可視音量滑桿容器 -->
+      <!-- 直角三角形音量滑桿容器 -->
       <div class="px-2 mb-6">
         <div class="triangle-container">
-          <!-- 灰色底座直角三角形 -->
+          <!-- 灰色底座直角三角形 (0% 100%, 100% 0%, 100% 100%) -->
           <div class="triangle-bg"></div>
-          <!-- 著色進度直角三角形 -->
-          <div id="triangleFill" class="triangle-fill"></div>
+
+          <!-- 同等大小的彩色三角形，透過外層裁切確保斜度完全吻合 -->
+          <div id="triangleFillWrapper" class="triangle-fill-wrapper">
+            <div id="triangleFill" class="triangle-fill"></div>
+          </div>
+
           <!-- 滑動調整層 -->
           <input 
             type="range" 
@@ -239,10 +257,11 @@
             class="volume-range-overlay"
           >
         </div>
-        <!-- 三角形底部音量大小輔助說明 -->
+
+        <!-- 輔助說明標籤 -->
         <div class="flex justify-between items-center text-xs font-bold text-slate-400 mt-1 px-1">
-          <span>🔇 最小聲 (0)</span>
-          <span>最響亮 (5) 📢</span>
+          <span>🔇 保持安靜 (0)</span>
+          <span>呼救最響亮 (5) 📢</span>
         </div>
       </div>
 
@@ -425,15 +444,19 @@
       contextIconBox.style.backgroundColor = data.lightBg;
       contextIconBox.style.color = data.themeColor;
 
-      // 更新直角三角形色塊寬度及滑桿數值
+      // 依音量比例進行精確裁切 (0% ~ 100%)
       const slider = document.getElementById('volumeRange');
       slider.value = lvl;
       const percent = (lvl / 5) * 100;
+      const rightInset = 100 - percent;
+      
+      const fillWrapper = document.getElementById('triangleFillWrapper');
+      fillWrapper.style.clipPath = `inset(0 ${rightInset}% 0 0)`;
+
       const triangleFill = document.getElementById('triangleFill');
-      triangleFill.style.width = `${percent}%`;
       triangleFill.style.backgroundColor = data.themeColor;
 
-      // 更新快速點選按鈕高亮狀態
+      // 更新按鈕樣式
       document.querySelectorAll('.level-btn').forEach(btn => {
         const btnLvl = parseInt(btn.getAttribute('data-level'));
         if (btnLvl === lvl) {
