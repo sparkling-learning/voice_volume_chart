@@ -49,7 +49,7 @@
       height: 52px;
     }
 
-    /* 底層淺灰直角三角形 (左尖右高：直角在右下角) */
+    /* 底層淺灰直角三角形 (左細右高：直角在右下角) */
     .triangle-bg {
       position: absolute;
       top: 0;
@@ -61,22 +61,19 @@
       border-radius: 0 0 10px 0;
     }
 
-    /* 
-      外層裁剪容器：大小位置與 triangle-bg 100% 重疊
-      透過 clip-path: inset(...) 由右向左裁剪，保證斜邊斜率完全重疊不變形
-    */
+    /* 外層裁剪容器 */
     .triangle-fill-wrapper {
       position: absolute;
       top: 0;
       left: 0;
       width: 100%;
       height: 100%;
-      clip-path: inset(0 100% 0 0); /* 預設完全裁掉 (音量 0) */
+      clip-path: inset(0 100% 0 0);
       transition: clip-path 0.28s cubic-bezier(0.4, 0, 0.2, 1);
       pointer-events: none;
     }
 
-    /* 實體彩色三角形：與底座幾何形狀一致 */
+    /* 實體彩色三角形 */
     .triangle-fill {
       width: 100%;
       height: 100%;
@@ -158,10 +155,10 @@
     }
   </style>
 </head>
-<body class="min-h-screen flex flex-col items-center justify-between p-4 md:p-8 text-slate-800">
+<body class="min-h-screen flex flex-col items-center justify-center p-4 md:p-8 text-slate-800">
 
   <!-- 頂部標題 -->
-  <header class="w-full max-w-4xl text-center my-2">
+  <header class="w-full max-w-4xl text-center mb-4">
     <div class="inline-flex items-center gap-3 bg-white/95 backdrop-blur px-8 py-3.5 rounded-full border border-sky-200 shadow-sm">
       <span class="text-3xl speaker-wave-anim">📢</span>
       <h1 class="text-2xl md:text-3xl font-black tracking-wide text-sky-950">我的聲量表</h1>
@@ -170,7 +167,7 @@
   </header>
 
   <!-- 主互動舞台卡片 -->
-  <main class="w-full max-w-4xl bg-white/95 backdrop-blur rounded-3xl p-6 md:p-10 soft-card-shadow border border-white flex flex-col items-center my-auto">
+  <main class="w-full max-w-4xl bg-white/95 backdrop-blur rounded-3xl p-6 md:p-10 soft-card-shadow border border-white flex flex-col items-center">
     
     <div class="w-full flex flex-col md:flex-row items-center justify-center gap-6 md:gap-10 mb-8">
       
@@ -238,7 +235,7 @@
       <!-- 直角三角形音量滑桿容器 -->
       <div class="px-2 mb-6">
         <div class="triangle-container">
-          <!-- 灰色底座直角三角形 (0% 100%, 100% 0%, 100% 100%) -->
+          <!-- 灰色底座直角三角形 -->
           <div class="triangle-bg"></div>
 
           <!-- 同等大小的彩色三角形，透過外層裁切確保斜度完全吻合 -->
@@ -296,10 +293,6 @@
     </div>
 
   </main>
-
-  <footer class="text-center text-xs text-slate-400 font-medium my-2">
-    💡 提示：將網頁與 0.png ~ 5.png 放在同一個資料夾內即可正常顯示圖片。亦可使用鍵盤方向鍵 ← / → 切換音量！
-  </footer>
 
   <script>
     const levels = [
@@ -444,7 +437,6 @@
       contextIconBox.style.backgroundColor = data.lightBg;
       contextIconBox.style.color = data.themeColor;
 
-      // 依音量比例進行精確裁切 (0% ~ 100%)
       const slider = document.getElementById('volumeRange');
       slider.value = lvl;
       const percent = (lvl / 5) * 100;
@@ -456,7 +448,6 @@
       const triangleFill = document.getElementById('triangleFill');
       triangleFill.style.backgroundColor = data.themeColor;
 
-      // 更新按鈕樣式
       document.querySelectorAll('.level-btn').forEach(btn => {
         const btnLvl = parseInt(btn.getAttribute('data-level'));
         if (btnLvl === lvl) {
