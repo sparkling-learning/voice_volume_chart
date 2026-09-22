@@ -42,38 +42,73 @@
       box-shadow: 0 20px 40px -12px rgba(14, 165, 233, 0.12), 0 8px 20px -6px rgba(0, 0, 0, 0.06);
     }
 
-    /* 自訂圓滑拖拉滑桿 */
-    .volume-range {
-      -webkit-appearance: none;
-      appearance: none;
-      height: 20px;
-      border-radius: 9999px;
-      outline: none;
-      transition: background 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-    }
-    .volume-range::-webkit-slider-thumb {
-      -webkit-appearance: none;
-      appearance: none;
-      width: 48px;
+    /* === 直角三角形音量指示槽 === */
+    .triangle-container {
+      position: relative;
+      width: 100%;
       height: 48px;
+    }
+    /* 底層淺灰直角三角形 (左細右闊) */
+    .triangle-bg {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: #e2e8f0;
+      clip-path: polygon(0% 100%, 100% 0%, 100% 100%);
+      border-radius: 0 0 12px 0;
+    }
+    /* 彩色填充層 (隨音量進度自左往右填滿) */
+    .triangle-fill {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 0%;
+      height: 100%;
+      background: var(--theme-color, #64748b);
+      clip-path: polygon(0% 100%, 100% 0%, 100% 100%);
+      transition: width 0.25s cubic-bezier(0.4, 0, 0.2, 1), background-color 0.25s ease;
+    }
+
+    /* 覆蓋於三角形上方的透明自訂滑桿 */
+    .volume-range-overlay {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      margin: 0;
+      -webkit-appearance: none;
+      appearance: none;
+      background: transparent;
+      outline: none;
+      cursor: pointer;
+      z-index: 10;
+    }
+    .volume-range-overlay::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      appearance: none;
+      width: 44px;
+      height: 44px;
       border-radius: 50%;
       background: #ffffff;
       cursor: grab;
-      box-shadow: 0 6px 18px rgba(0, 0, 0, 0.25);
+      box-shadow: 0 6px 16px rgba(0, 0, 0, 0.3);
       border: 4px solid var(--theme-color, #0284c7);
       transition: transform 0.15s ease, border-color 0.25s ease;
     }
-    .volume-range::-webkit-slider-thumb:active {
+    .volume-range-overlay::-webkit-slider-thumb:active {
       cursor: grabbing;
-      transform: scale(1.18);
+      transform: scale(1.15);
     }
-    .volume-range::-moz-range-thumb {
-      width: 48px;
-      height: 48px;
+    .volume-range-overlay::-moz-range-thumb {
+      width: 44px;
+      height: 44px;
       border-radius: 50%;
       background: #ffffff;
       cursor: grab;
-      box-shadow: 0 6px 18px rgba(0, 0, 0, 0.25);
+      box-shadow: 0 6px 16px rgba(0, 0, 0, 0.3);
       border: 4px solid var(--theme-color, #0284c7);
       transition: transform 0.15s ease;
     }
@@ -111,7 +146,7 @@
 </head>
 <body class="min-h-screen flex flex-col items-center justify-between p-4 md:p-8 text-slate-800">
 
-  <!-- 頂部標題與雲朵提示 -->
+  <!-- 頂部標題 -->
   <header class="w-full max-w-4xl text-center my-2">
     <div class="inline-flex items-center gap-3 bg-white/95 backdrop-blur px-8 py-3.5 rounded-full border border-sky-200 shadow-sm">
       <span class="text-3xl speaker-wave-anim">📢</span>
@@ -165,7 +200,7 @@
           </div>
           <div>
             <div class="text-xs text-slate-400 font-bold uppercase">適合使用的場景</div>
-            <div id="contextText" class="text-slate-800 font-bold text-base md:text-lg">看圖書、做功課、聆聽別人說話</div>
+            <div id="contextText" class="text-slate-800 font-bold text-base md:text-lg">閱讀圖書、書寫、聆聽別人說話時</div>
           </div>
         </div>
 
@@ -176,9 +211,9 @@
     <div class="w-full bg-slate-50/90 rounded-2xl p-6 border border-slate-200">
       
       <!-- 控制列頂部 -->
-      <div class="flex items-center justify-between mb-4">
+      <div class="flex items-center justify-between mb-3">
         <span class="text-sm font-bold text-slate-600 flex items-center gap-2">
-          <i class="fa-solid fa-hand-pointer text-sky-500"></i> 請滑動拉桿或直接點選數字：
+          <i class="fa-solid fa-hand-pointer text-sky-500"></i> 請滑動三角形音量條或直接點選數字：
         </span>
         <!-- 音效切換 -->
         <button id="soundToggleBtn" class="text-xs bg-white hover:bg-slate-100 text-slate-600 px-3.5 py-1.5 rounded-full border border-slate-300 font-bold transition flex items-center gap-2 shadow-sm">
@@ -186,17 +221,29 @@
         </button>
       </div>
 
-      <!-- 拖拉式音量 Slider -->
+      <!-- 直角三角形可視音量滑桿容器 -->
       <div class="px-2 mb-6">
-        <input 
-          type="range" 
-          id="volumeRange" 
-          min="0" 
-          max="5" 
-          step="1" 
-          value="0" 
-          class="volume-range w-full cursor-pointer bg-slate-200"
-        >
+        <div class="triangle-container">
+          <!-- 灰色底座直角三角形 -->
+          <div class="triangle-bg"></div>
+          <!-- 著色進度直角三角形 -->
+          <div id="triangleFill" class="triangle-fill"></div>
+          <!-- 滑動調整層 -->
+          <input 
+            type="range" 
+            id="volumeRange" 
+            min="0" 
+            max="5" 
+            step="1" 
+            value="0" 
+            class="volume-range-overlay"
+          >
+        </div>
+        <!-- 三角形底部音量大小輔助說明 -->
+        <div class="flex justify-between items-center text-xs font-bold text-slate-400 mt-1 px-1">
+          <span>🔇 最小聲 (0)</span>
+          <span>最響亮 (5) 📢</span>
+        </div>
       </div>
 
       <!-- 快速點選按鈕矩陣 (0 ~ 5) -->
@@ -378,11 +425,15 @@
       contextIconBox.style.backgroundColor = data.lightBg;
       contextIconBox.style.color = data.themeColor;
 
+      // 更新直角三角形色塊寬度及滑桿數值
       const slider = document.getElementById('volumeRange');
       slider.value = lvl;
       const percent = (lvl / 5) * 100;
-      slider.style.background = `linear-gradient(to right, ${data.themeColor} 0%, ${data.themeColor} ${percent}%, #e2e8f0 ${percent}%, #e2e8f0 100%)`;
+      const triangleFill = document.getElementById('triangleFill');
+      triangleFill.style.width = `${percent}%`;
+      triangleFill.style.backgroundColor = data.themeColor;
 
+      // 更新快速點選按鈕高亮狀態
       document.querySelectorAll('.level-btn').forEach(btn => {
         const btnLvl = parseInt(btn.getAttribute('data-level'));
         if (btnLvl === lvl) {
