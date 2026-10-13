@@ -1,8 +1,8 @@
 <!DOCTYPE html>
-<html lang="zh-HK" style="font-size: 105%;">
+<html lang="zh-HK">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
   <title>我的聲量表 - 互動視覺提示咭</title>
   <!-- Tailwind CSS CDN -->
   <script src="https://cdn.tailwindcss.com"></script>
@@ -14,22 +14,28 @@
   <link href="https://fonts.googleapis.com/css2?family=M+PLUS+Rounded+1c:wght@500;700;800;900&family=Noto+Sans+TC:wght@400;500;700;900&display=swap" rel="stylesheet">
 
   <style>
+    :root {
+      --app-height: 100vh;
+    }
+
     body {
       font-family: 'M PLUS Rounded 1c', 'Noto Sans TC', sans-serif;
       user-select: none;
       -webkit-user-select: none;
       background: radial-gradient(circle at top left, #f0f9ff, #e0f2fe 40%, #f8fafc);
-      overflow-x: hidden;
+      overflow: hidden;
+      height: 100dvh;
+      width: 100vw;
     }
 
     /* 喇叭搖晃發聲動畫 */
     @keyframes speakerPulse {
       0% { transform: scale(1) rotate(0deg); }
-      15% { transform: scale(1.25) rotate(-14deg); }
-      30% { transform: scale(1.25) rotate(14deg); }
-      45% { transform: scale(1.25) rotate(-10deg); }
-      60% { transform: scale(1.15) rotate(8deg); }
-      75% { transform: scale(1.05) rotate(-4deg); }
+      15% { transform: scale(1.2) rotate(-12deg); }
+      30% { transform: scale(1.2) rotate(12deg); }
+      45% { transform: scale(1.2) rotate(-8deg); }
+      60% { transform: scale(1.1) rotate(6deg); }
+      75% { transform: scale(1.05) rotate(-3deg); }
       100% { transform: scale(1) rotate(0deg); }
     }
     .speaker-wave-anim {
@@ -50,18 +56,23 @@
 
     /* 柔和立體卡片陰影 */
     .soft-card-shadow {
-      box-shadow: 0 16px 36px -12px rgba(14, 165, 233, 0.12), 0 8px 20px -6px rgba(0, 0, 0, 0.06);
+      box-shadow: 0 12px 30px -10px rgba(14, 165, 233, 0.12), 0 4px 12px -4px rgba(0, 0, 0, 0.05);
     }
 
     /* === 直角三角形音量指示槽 === */
     .triangle-container {
       position: relative;
       width: 100%;
-      height: 48px;
+      height: 38px;
       cursor: pointer;
     }
+    @media (min-height: 600px) {
+      .triangle-container {
+        height: 48px;
+      }
+    }
 
-    /* 底層淺灰直角三角形 (左細右高：直角在右下角) */
+    /* 底層淺灰直角三角形 */
     .triangle-bg {
       position: absolute;
       top: 0;
@@ -99,15 +110,22 @@
       position: absolute;
       top: 50%;
       transform: translateY(-50%);
-      width: 40px;
-      height: 40px;
+      width: 34px;
+      height: 34px;
       border-radius: 50%;
       background: #ffffff;
-      box-shadow: 0 4px 14px rgba(0, 0, 0, 0.25);
-      border: 4px solid var(--theme-color, #0284c7);
+      box-shadow: 0 3px 10px rgba(0, 0, 0, 0.22);
+      border: 3.5px solid var(--theme-color, #0284c7);
       pointer-events: none;
       transition: left 0.25s cubic-bezier(0.4, 0, 0.2, 1), border-color 0.25s ease;
       z-index: 15;
+    }
+    @media (min-height: 600px) {
+      .custom-slider-thumb {
+        width: 42px;
+        height: 42px;
+        border-width: 4px;
+      }
     }
 
     /* 透明滑動互動層 */
@@ -126,413 +144,3 @@
       z-index: 20;
       opacity: 0;
     }
-
-    /* 雲朵形狀提示泡泡 */
-    .cloud-bubble-tip {
-      position: relative;
-      background: #ffffff;
-      border: 3px solid var(--theme-color, #38bdf8);
-      border-radius: 24px;
-      transition: all 0.3s ease;
-    }
-    .cloud-bubble-tip::before {
-      content: '';
-      position: absolute;
-      bottom: -13px;
-      left: 36px;
-      width: 20px;
-      height: 20px;
-      background: #ffffff;
-      border-bottom: 3px solid var(--theme-color, #38bdf8);
-      border-right: 3px solid var(--theme-color, #38bdf8);
-      transform: rotate(45deg);
-    }
-
-    /* 圖片淡入縮放動效 */
-    .card-img-enter {
-      animation: popIn 0.35s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
-    }
-    @keyframes popIn {
-      0% { opacity: 0.2; transform: scale(0.92); }
-      100% { opacity: 1; transform: scale(1); }
-    }
-
-    /* 檢測到直向時浮現旋轉提示 (適用手機及直向平板) */
-    @media screen and (orientation: portrait) and (max-width: 900px) {
-      #rotatePrompt {
-        display: flex !important;
-      }
-    }
-  </style>
-</head>
-<body class="h-screen w-screen flex flex-col items-center justify-between p-2 md:p-4 text-slate-800 overflow-hidden box-border">
-
-  <!-- 直向鎖定防呆提示 (直向時自動彈出) -->
-  <div id="rotatePrompt" style="display: none;" class="fixed inset-0 z-50 bg-sky-950/90 backdrop-blur-md flex-col items-center justify-center text-white text-center p-6 gap-5">
-    <div class="text-6xl rotate-device-anim text-sky-300">
-      <i class="fa-solid fa-mobile-screen-button"></i>
-    </div>
-    <div class="space-y-2">
-      <h2 class="text-2xl font-black">請將裝置轉為橫向使用</h2>
-      <p class="text-sm text-sky-200">本教材經專門設計，橫向視覺效果最舒適、最清楚！</p>
-    </div>
-  </div>
-
-  <!-- 頂部標題列 (高度精簡，預留更多高度給控制區) -->
-  <header class="w-full max-w-4xl text-center shrink-0 my-1">
-    <div class="inline-flex items-center gap-2.5 bg-white/95 backdrop-blur px-6 py-2 rounded-full border border-sky-200 shadow-sm">
-      <span class="text-2xl speaker-wave-anim">📢</span>
-      <h1 class="text-xl md:text-2xl font-black tracking-wide text-sky-950">我的聲量表</h1>
-      <span class="text-xs px-3 py-0.5 bg-sky-100 text-sky-800 rounded-full font-bold">視覺提示咭</span>
-    </div>
-  </header>
-
-  <!-- 主互動卡片 (限制最大高度，避免橫向時切邊) -->
-  <main class="w-full max-w-4xl flex-1 max-h-[85vh] bg-white/95 backdrop-blur rounded-3xl p-4 md:p-6 soft-card-shadow border border-white flex flex-col justify-between my-auto">
-    
-    <!-- 上半部：圖片 + 解說 (自適應橫向雙欄) -->
-    <div class="w-full flex flex-row items-center justify-center gap-4 md:gap-8 my-auto">
-      
-      <!-- 圖片展示容器 (動態配合視窗高度) -->
-      <div id="imgCardBox" class="relative w-44 h-44 sm:w-56 sm:h-56 md:w-64 md:h-64 bg-slate-50 border-4 rounded-3xl flex items-center justify-center p-3 transition-all duration-300 overflow-hidden shadow-inner shrink-0">
-        <img 
-          id="soundImage" 
-          src="0.png" 
-          alt="聲量圖示" 
-          class="w-full h-full object-contain card-img-enter"
-          onerror="handleImgError(this)"
-        >
-
-        <!-- 左上角音量數字徽章 -->
-        <div id="levelBadge" class="absolute top-2.5 left-2.5 w-11 h-11 md:w-12 md:h-12 rounded-2xl flex items-center justify-center text-white text-2xl md:text-3xl font-black shadow-lg transition-all duration-300">
-          0
-        </div>
-      </div>
-
-      <!-- 右側文字解說與情境雲朵框 -->
-      <div class="flex-1 w-full max-w-md flex flex-col justify-center">
-        
-        <!-- 雲朵提示框 -->
-        <div class="cloud-bubble-tip p-3.5 md:p-4 shadow-sm mb-3">
-          <div class="flex items-center gap-2 mb-1 text-xs font-bold tracking-wider uppercase text-slate-400">
-            <i class="fa-solid fa-volume-high" id="speakerIcon"></i>
-            <span>聲量級別說明</span>
-          </div>
-          <div id="levelTitle" class="text-2xl md:text-3xl font-black tracking-tight text-slate-900 transition-colors">
-            保持安靜
-          </div>
-          <p id="levelDesc" class="text-slate-600 text-sm md:text-base mt-1 font-medium leading-relaxed">
-            不發出任何聲音。
-          </p>
-        </div>
-
-        <!-- 建議場景卡片 -->
-        <div class="bg-slate-50/80 border border-slate-200/80 rounded-xl p-3 flex items-center gap-3">
-          <div id="contextIconBox" class="w-10 h-10 rounded-xl bg-slate-200 text-slate-600 flex items-center justify-center text-xl shrink-0 transition-colors">
-            <i id="contextIcon" class="fa-solid fa-book-open"></i>
-          </div>
-          <div>
-            <div class="text-[11px] text-slate-400 font-bold uppercase">適合使用的場景</div>
-            <div id="contextText" class="text-slate-800 font-bold text-sm md:text-base leading-tight">閱讀圖書、書寫、聆聽別人說話時</div>
-          </div>
-        </div>
-
-      </div>
-    </div>
-
-    <!-- 下半部：三角形滑桿及快速點選按鈕面板 -->
-    <div class="w-full bg-slate-50/90 rounded-2xl p-3 md:p-4 border border-slate-200 shrink-0">
-      
-      <!-- 控制列頂部 -->
-      <div class="flex items-center justify-between mb-2">
-        <span class="text-xs md:text-sm font-bold text-slate-600 flex items-center gap-1.5">
-          <i class="fa-solid fa-hand-pointer text-sky-500"></i> 請滑動三角形音量條或直接點選數字：
-        </span>
-        <!-- 音效切換按鈕 -->
-        <button id="soundToggleBtn" class="text-xs bg-white hover:bg-slate-100 text-slate-600 px-3 py-1 rounded-full border border-slate-300 font-bold transition flex items-center gap-1.5 shadow-sm">
-          <i class="fa-solid fa-bell text-sky-500"></i> 音效開
-        </button>
-      </div>
-
-      <!-- 直角三角形音量滑桿容器 -->
-      <div class="px-1 mb-2.5">
-        <div class="triangle-container" id="triangleContainer">
-          <!-- 灰色底座直角三角形 -->
-          <div class="triangle-bg"></div>
-
-          <!-- 彩色填充層 -->
-          <div id="triangleFillWrapper" class="triangle-fill-wrapper">
-            <div id="triangleFill" class="triangle-fill"></div>
-          </div>
-
-          <!-- 精確對齊色塊邊界的圓形滑塊 -->
-          <div id="customThumb" class="custom-slider-thumb"></div>
-
-          <!-- 透明滑動互動層 -->
-          <input 
-            type="range" 
-            id="volumeRange" 
-            min="0" 
-            max="5" 
-            step="1" 
-            value="0" 
-            class="volume-range-overlay"
-          >
-        </div>
-
-        <!-- 輔助說明標籤 -->
-        <div class="flex justify-between items-center text-[11px] font-bold text-slate-400 mt-1 px-1">
-          <span>🔇 保持安靜 (0)</span>
-          <span>呼救最響亮 (5) 📢</span>
-        </div>
-      </div>
-
-      <!-- 快速點選按鈕矩陣 (0 ~ 5) -->
-      <div class="grid grid-cols-6 gap-1.5 md:gap-3">
-        <button onclick="changeLevel(0)" class="level-btn py-1.5 md:py-2 px-1 rounded-xl text-center border-2 transition-all duration-200 flex flex-col items-center shadow-sm" data-level="0">
-          <span class="text-lg md:text-xl font-black leading-none">0</span>
-          <span class="text-[11px] font-bold truncate max-w-full mt-0.5">保持安靜</span>
-        </button>
-        <button onclick="changeLevel(1)" class="level-btn py-1.5 md:py-2 px-1 rounded-xl text-center border-2 transition-all duration-200 flex flex-col items-center shadow-sm" data-level="1">
-          <span class="text-lg md:text-xl font-black leading-none">1</span>
-          <span class="text-[11px] font-bold truncate max-w-full mt-0.5">說秘密</span>
-        </button>
-        <button onclick="changeLevel(2)" class="level-btn py-1.5 md:py-2 px-1 rounded-xl text-center border-2 transition-all duration-200 flex flex-col items-center shadow-sm" data-level="2">
-          <span class="text-lg md:text-xl font-black leading-none">2</span>
-          <span class="text-[11px] font-bold truncate max-w-full mt-0.5">身旁的人</span>
-        </button>
-        <button onclick="changeLevel(3)" class="level-btn py-1.5 md:py-2 px-1 rounded-xl text-center border-2 transition-all duration-200 flex flex-col items-center shadow-sm" data-level="3">
-          <span class="text-lg md:text-xl font-black leading-none">3</span>
-          <span class="text-[11px] font-bold truncate max-w-full mt-0.5">室內較遠</span>
-        </button>
-        <button onclick="changeLevel(4)" class="level-btn py-1.5 md:py-2 px-1 rounded-xl text-center border-2 transition-all duration-200 flex flex-col items-center shadow-sm" data-level="4">
-          <span class="text-lg md:text-xl font-black leading-none">4</span>
-          <span class="text-[11px] font-bold truncate max-w-full mt-0.5">室外玩耍</span>
-        </button>
-        <button onclick="changeLevel(5)" class="level-btn py-1.5 md:py-2 px-1 rounded-xl text-center border-2 transition-all duration-200 flex flex-col items-center shadow-sm" data-level="5">
-          <span class="text-lg md:text-xl font-black leading-none">5</span>
-          <span class="text-[11px] font-bold truncate max-w-full mt-0.5">求救</span>
-        </button>
-      </div>
-
-    </div>
-
-  </main>
-
-  <script>
-    const levels = [
-      {
-        level: 0,
-        img: "0.png",
-        title: "保持安靜",
-        desc: "閉住嘴巴，不發出任何聲音。",
-        context: "閱讀圖書、書寫、聆聽別人說話時",
-        icon: "fa-solid fa-book-open",
-        themeColor: "#64748b",
-        lightBg: "#f8fafc",
-        border: "#cbd5e1",
-        freq: 261.63
-      },
-      {
-        level: 1,
-        img: "1.png",
-        title: "說秘密",
-        desc: "輕聲說話，只有身旁的人靠近才能聽見。",
-        context: "跟身旁的人說悄悄話、私下互相提醒",
-        icon: "fa-solid fa-ear-listen",
-        themeColor: "#0284c7",
-        lightBg: "#f0f9ff",
-        border: "#7dd3fc",
-        freq: 293.66
-      },
-      {
-        level: 2,
-        img: "2.png",
-        title: "和附近人說話",
-        desc: "平常溫和對話的音量，坐在附近的同學清楚聽到即可。",
-        context: "討論題目、分組活動合作",
-        icon: "fa-solid fa-user-group",
-        themeColor: "#16a34a",
-        lightBg: "#f0fdf4",
-        border: "#86efac",
-        freq: 329.63
-      },
-      {
-        level: 3,
-        img: "3.png",
-        title: "室內較遠距離",
-        desc: "清脆響亮的大聲發言，讓整間課室的同學都聽得到。",
-        context: "向全班發言",
-        icon: "fa-solid fa-chalkboard-user",
-        themeColor: "#d97706",
-        lightBg: "#fffbeb",
-        border: "#fde68a",
-        freq: 392.00
-      },
-      {
-        level: 4,
-        img: "4.png",
-        title: "室外玩耍",
-        desc: "在戶外操場遊樂場盡情跑跳玩耍，聲音可以響亮開朗！",
-        context: "戶外遊樂場或操場遊玩時",
-        icon: "fa-solid fa-tree",
-        themeColor: "#ea580c",
-        lightBg: "#fff7ed",
-        border: "#fdba74",
-        freq: 440.00
-      },
-      {
-        level: 5,
-        img: "5.png",
-        title: "求救",
-        desc: "遇到危險、意外或受傷時，用盡全力大聲呼叫「救命啊！」",
-        context: "緊急意外、遇險求助、保護生命",
-        icon: "fa-solid fa-triangle-exclamation",
-        themeColor: "#dc2626",
-        lightBg: "#fef2f2",
-        border: "#fca5a5",
-        freq: 523.25
-      }
-    ];
-
-    let currentLevel = 0;
-    let isSoundOn = true;
-    let audioCtx = null;
-
-    function playBeep(frequency) {
-      if (!isSoundOn) return;
-      try {
-        if (!audioCtx) {
-          audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-        }
-        if (audioCtx.state === 'suspended') {
-          audioCtx.resume();
-        }
-        const osc = audioCtx.createOscillator();
-        const gain = audioCtx.createGain();
-        
-        osc.type = currentLevel >= 4 ? 'triangle' : 'sine';
-        osc.frequency.setValueAtTime(frequency, audioCtx.currentTime);
-
-        gain.gain.setValueAtTime(0.12, audioCtx.currentTime);
-        gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.2);
-
-        osc.connect(gain);
-        gain.connect(audioCtx.destination);
-
-        osc.start();
-        osc.stop(audioCtx.currentTime + 0.2);
-      } catch (err) {}
-    }
-
-    function handleImgError(imageEl) {
-      imageEl.alt = `[請將 ${imageEl.getAttribute('src')} 放在此網頁同目錄]`;
-      imageEl.classList.remove('object-contain');
-    }
-
-    function changeLevel(lvl) {
-      currentLevel = lvl;
-      const data = levels[lvl];
-
-      document.documentElement.style.setProperty('--theme-color', data.themeColor);
-
-      const img = document.getElementById('soundImage');
-      img.classList.remove('card-img-enter');
-      void img.offsetWidth;
-      img.src = data.img;
-      img.classList.add('card-img-enter');
-
-      const imgCardBox = document.getElementById('imgCardBox');
-      imgCardBox.style.borderColor = data.border;
-      imgCardBox.style.backgroundColor = data.lightBg;
-
-      const levelBadge = document.getElementById('levelBadge');
-      levelBadge.textContent = data.level;
-      levelBadge.style.backgroundColor = data.themeColor;
-
-      const levelTitle = document.getElementById('levelTitle');
-      levelTitle.textContent = data.title;
-      levelTitle.style.color = data.themeColor;
-      document.getElementById('levelDesc').textContent = data.desc;
-      document.getElementById('contextText').textContent = data.context;
-
-      const contextIcon = document.getElementById('contextIcon');
-      contextIcon.className = data.icon;
-      const contextIconBox = document.getElementById('contextIconBox');
-      contextIconBox.style.backgroundColor = data.lightBg;
-      contextIconBox.style.color = data.themeColor;
-
-      // 1 號定點右移 5% (25%)，其餘維持對應比例
-      const fillPercentageMap = [0, 25, 40, 60, 80, 100];
-      const percent = fillPercentageMap[lvl];
-      const rightInset = 100 - percent;
-
-      const slider = document.getElementById('volumeRange');
-      slider.value = lvl;
-      
-      const fillWrapper = document.getElementById('triangleFillWrapper');
-      fillWrapper.style.clipPath = `inset(0 ${rightInset}% 0 0)`;
-
-      const triangleFill = document.getElementById('triangleFill');
-      triangleFill.style.backgroundColor = data.themeColor;
-
-      // 圓形滑塊中心點對齊彩色三角形右邊界
-      const customThumb = document.getElementById('customThumb');
-      if (lvl === 0) {
-        customThumb.style.left = '0px';
-      } else if (lvl === 5) {
-        customThumb.style.left = 'calc(100% - 40px)';
-      } else {
-        customThumb.style.left = `calc(${percent}% - 20px)`;
-      }
-
-      document.querySelectorAll('.level-btn').forEach(btn => {
-        const btnLvl = parseInt(btn.getAttribute('data-level'));
-        if (btnLvl === lvl) {
-          btn.style.backgroundColor = data.themeColor;
-          btn.style.borderColor = data.themeColor;
-          btn.style.color = '#ffffff';
-          btn.style.transform = 'scale(1.05)';
-        } else {
-          btn.style.backgroundColor = '#ffffff';
-          btn.style.borderColor = '#e2e8f0';
-          btn.style.color = '#475569';
-          btn.style.transform = 'scale(1)';
-        }
-      });
-
-      playBeep(data.freq);
-    }
-
-    const slider = document.getElementById('volumeRange');
-    slider.addEventListener('input', (e) => {
-      const val = parseInt(e.target.value);
-      if (val !== currentLevel) {
-        changeLevel(val);
-      }
-    });
-
-    const soundToggleBtn = document.getElementById('soundToggleBtn');
-    soundToggleBtn.addEventListener('click', () => {
-      isSoundOn = !isSoundOn;
-      if (isSoundOn) {
-        soundToggleBtn.innerHTML = '<i class="fa-solid fa-bell text-sky-500"></i> 音效開';
-        soundToggleBtn.classList.remove('opacity-60');
-      } else {
-        soundToggleBtn.innerHTML = '<i class="fa-solid fa-bell-slash text-slate-400"></i> 已靜音';
-        soundToggleBtn.classList.add('opacity-60');
-      }
-    });
-
-    window.addEventListener('keydown', (e) => {
-      if (e.key === 'ArrowRight' || e.key === 'ArrowUp') {
-        if (currentLevel < 5) changeLevel(currentLevel + 1);
-      } else if (e.key === 'ArrowLeft' || e.key === 'ArrowDown') {
-        if (currentLevel > 0) changeLevel(currentLevel - 1);
-      }
-    });
-
-    changeLevel(0);
-  </script>
-</body>
-</html>
