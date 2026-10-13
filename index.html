@@ -1,8 +1,8 @@
 <!DOCTYPE html>
-<html lang="zh-HK" style="font-size: 110%;">
+<html lang="zh-HK" style="font-size: 105%;">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>我的聲量表 - 互動視覺提示咭</title>
   <!-- Tailwind CSS CDN -->
   <script src="https://cdn.tailwindcss.com"></script>
@@ -19,6 +19,7 @@
       user-select: none;
       -webkit-user-select: none;
       background: radial-gradient(circle at top left, #f0f9ff, #e0f2fe 40%, #f8fafc);
+      overflow-x: hidden;
     }
 
     /* 喇叭搖晃發聲動畫 */
@@ -37,16 +38,26 @@
       transform-origin: center bottom;
     }
 
+    /* 裝置旋轉提示動畫 */
+    @keyframes rotateDevice {
+      0%, 20% { transform: rotate(0deg); }
+      50%, 80% { transform: rotate(90deg); }
+      100% { transform: rotate(0deg); }
+    }
+    .rotate-device-anim {
+      animation: rotateDevice 2.2s infinite ease-in-out;
+    }
+
     /* 柔和立體卡片陰影 */
     .soft-card-shadow {
-      box-shadow: 0 20px 40px -12px rgba(14, 165, 233, 0.12), 0 8px 20px -6px rgba(0, 0, 0, 0.06);
+      box-shadow: 0 16px 36px -12px rgba(14, 165, 233, 0.12), 0 8px 20px -6px rgba(0, 0, 0, 0.06);
     }
 
     /* === 直角三角形音量指示槽 === */
     .triangle-container {
       position: relative;
       width: 100%;
-      height: 52px;
+      height: 48px;
       cursor: pointer;
     }
 
@@ -59,7 +70,7 @@
       height: 100%;
       background: #e2e8f0;
       clip-path: polygon(0% 100%, 100% 0%, 100% 100%);
-      border-radius: 0 0 10px 0;
+      border-radius: 0 0 8px 0;
     }
 
     /* 外層裁剪容器 */
@@ -83,23 +94,23 @@
       transition: background-color 0.25s ease;
     }
 
-    /* 自訂獨立圓形滑塊：位置精準對齊彩色裁剪邊界 */
+    /* 自訂獨立圓形滑塊 */
     .custom-slider-thumb {
       position: absolute;
       top: 50%;
       transform: translateY(-50%);
-      width: 44px;
-      height: 44px;
+      width: 40px;
+      height: 40px;
       border-radius: 50%;
       background: #ffffff;
-      box-shadow: 0 6px 16px rgba(0, 0, 0, 0.25);
+      box-shadow: 0 4px 14px rgba(0, 0, 0, 0.25);
       border: 4px solid var(--theme-color, #0284c7);
-      pointer-events: none; /* 點擊穿透至透明滑桿 */
-      transition: left 0.25s cubic-bezier(0.4, 0, 0.2, 1), border-color 0.25s ease, transform 0.15s ease;
+      pointer-events: none;
+      transition: left 0.25s cubic-bezier(0.4, 0, 0.2, 1), border-color 0.25s ease;
       z-index: 15;
     }
 
-    /* 覆蓋於三角形上方的透明控制滑桿 (隱藏原生滑塊) */
+    /* 透明滑動互動層 */
     .volume-range-overlay {
       position: absolute;
       top: 0;
@@ -120,24 +131,24 @@
     .cloud-bubble-tip {
       position: relative;
       background: #ffffff;
-      border: 3.5px solid var(--theme-color, #38bdf8);
-      border-radius: 28px;
+      border: 3px solid var(--theme-color, #38bdf8);
+      border-radius: 24px;
       transition: all 0.3s ease;
     }
     .cloud-bubble-tip::before {
       content: '';
       position: absolute;
-      bottom: -15px;
-      left: 48px;
-      width: 22px;
-      height: 22px;
+      bottom: -13px;
+      left: 36px;
+      width: 20px;
+      height: 20px;
       background: #ffffff;
-      border-bottom: 3.5px solid var(--theme-color, #38bdf8);
-      border-right: 3.5px solid var(--theme-color, #38bdf8);
+      border-bottom: 3px solid var(--theme-color, #38bdf8);
+      border-right: 3px solid var(--theme-color, #38bdf8);
       transform: rotate(45deg);
     }
 
-    /* 圖片淡入縮放微動效 */
+    /* 圖片淡入縮放動效 */
     .card-img-enter {
       animation: popIn 0.35s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
     }
@@ -145,26 +156,45 @@
       0% { opacity: 0.2; transform: scale(0.92); }
       100% { opacity: 1; transform: scale(1); }
     }
+
+    /* 檢測到直向時浮現旋轉提示 (適用手機及直向平板) */
+    @media screen and (orientation: portrait) and (max-width: 900px) {
+      #rotatePrompt {
+        display: flex !important;
+      }
+    }
   </style>
 </head>
-<body class="min-h-screen flex flex-col items-center justify-center p-4 md:p-8 text-slate-800">
+<body class="h-screen w-screen flex flex-col items-center justify-between p-2 md:p-4 text-slate-800 overflow-hidden box-border">
 
-  <!-- 頂部標題 -->
-  <header class="w-full max-w-4xl text-center mb-4">
-    <div class="inline-flex items-center gap-3 bg-white/95 backdrop-blur px-8 py-3.5 rounded-full border border-sky-200 shadow-sm">
-      <span class="text-3xl speaker-wave-anim">📢</span>
-      <h1 class="text-2xl md:text-3xl font-black tracking-wide text-sky-950">我的聲量表</h1>
-      <span class="text-xs md:text-sm px-3.5 py-1 bg-sky-100 text-sky-800 rounded-full font-bold">視覺提示咭</span>
+  <!-- 直向鎖定防呆提示 (直向時自動彈出) -->
+  <div id="rotatePrompt" style="display: none;" class="fixed inset-0 z-50 bg-sky-950/90 backdrop-blur-md flex-col items-center justify-center text-white text-center p-6 gap-5">
+    <div class="text-6xl rotate-device-anim text-sky-300">
+      <i class="fa-solid fa-mobile-screen-button"></i>
+    </div>
+    <div class="space-y-2">
+      <h2 class="text-2xl font-black">請將裝置轉為橫向使用</h2>
+      <p class="text-sm text-sky-200">本教材經專門設計，橫向視覺效果最舒適、最清楚！</p>
+    </div>
+  </div>
+
+  <!-- 頂部標題列 (高度精簡，預留更多高度給控制區) -->
+  <header class="w-full max-w-4xl text-center shrink-0 my-1">
+    <div class="inline-flex items-center gap-2.5 bg-white/95 backdrop-blur px-6 py-2 rounded-full border border-sky-200 shadow-sm">
+      <span class="text-2xl speaker-wave-anim">📢</span>
+      <h1 class="text-xl md:text-2xl font-black tracking-wide text-sky-950">我的聲量表</h1>
+      <span class="text-xs px-3 py-0.5 bg-sky-100 text-sky-800 rounded-full font-bold">視覺提示咭</span>
     </div>
   </header>
 
-  <!-- 主互動舞台卡片 -->
-  <main class="w-full max-w-4xl bg-white/95 backdrop-blur rounded-3xl p-6 md:p-10 soft-card-shadow border border-white flex flex-col items-center">
+  <!-- 主互動卡片 (限制最大高度，避免橫向時切邊) -->
+  <main class="w-full max-w-4xl flex-1 max-h-[85vh] bg-white/95 backdrop-blur rounded-3xl p-4 md:p-6 soft-card-shadow border border-white flex flex-col justify-between my-auto">
     
-    <div class="w-full flex flex-col md:flex-row items-center justify-center gap-6 md:gap-10 mb-8">
+    <!-- 上半部：圖片 + 解說 (自適應橫向雙欄) -->
+    <div class="w-full flex flex-row items-center justify-center gap-4 md:gap-8 my-auto">
       
-      <!-- 圖片展示容器 (0.png ~ 5.png) -->
-      <div id="imgCardBox" class="relative w-72 h-72 md:w-88 md:h-88 bg-slate-50 border-4 rounded-3xl flex items-center justify-center p-4 transition-all duration-300 overflow-hidden shadow-inner">
+      <!-- 圖片展示容器 (動態配合視窗高度) -->
+      <div id="imgCardBox" class="relative w-44 h-44 sm:w-56 sm:h-56 md:w-64 md:h-64 bg-slate-50 border-4 rounded-3xl flex items-center justify-center p-3 transition-all duration-300 overflow-hidden shadow-inner shrink-0">
         <img 
           id="soundImage" 
           src="0.png" 
@@ -174,58 +204,58 @@
         >
 
         <!-- 左上角音量數字徽章 -->
-        <div id="levelBadge" class="absolute top-4 left-4 w-14 h-14 rounded-2xl flex items-center justify-center text-white text-3xl font-black shadow-lg transition-all duration-300">
+        <div id="levelBadge" class="absolute top-2.5 left-2.5 w-11 h-11 md:w-12 md:h-12 rounded-2xl flex items-center justify-center text-white text-2xl md:text-3xl font-black shadow-lg transition-all duration-300">
           0
         </div>
       </div>
 
       <!-- 右側文字解說與情境雲朵框 -->
-      <div class="flex-1 w-full md:max-w-md flex flex-col justify-center">
+      <div class="flex-1 w-full max-w-md flex flex-col justify-center">
         
         <!-- 雲朵提示框 -->
-        <div class="cloud-bubble-tip p-6 shadow-sm mb-5">
-          <div class="flex items-center gap-2 mb-2 text-xs md:text-sm font-bold tracking-wider uppercase text-slate-400">
+        <div class="cloud-bubble-tip p-3.5 md:p-4 shadow-sm mb-3">
+          <div class="flex items-center gap-2 mb-1 text-xs font-bold tracking-wider uppercase text-slate-400">
             <i class="fa-solid fa-volume-high" id="speakerIcon"></i>
             <span>聲量級別說明</span>
           </div>
-          <div id="levelTitle" class="text-3xl md:text-4xl font-black tracking-tight text-slate-900 transition-colors">
+          <div id="levelTitle" class="text-2xl md:text-3xl font-black tracking-tight text-slate-900 transition-colors">
             保持安靜
           </div>
-          <p id="levelDesc" class="text-slate-600 text-base md:text-lg mt-2 font-medium leading-relaxed">
+          <p id="levelDesc" class="text-slate-600 text-sm md:text-base mt-1 font-medium leading-relaxed">
             不發出任何聲音。
           </p>
         </div>
 
         <!-- 建議場景卡片 -->
-        <div class="bg-slate-50/80 border border-slate-200/80 rounded-2xl p-4 flex items-center gap-4">
-          <div id="contextIconBox" class="w-12 h-12 rounded-xl bg-slate-200 text-slate-600 flex items-center justify-center text-2xl shrink-0 transition-colors">
+        <div class="bg-slate-50/80 border border-slate-200/80 rounded-xl p-3 flex items-center gap-3">
+          <div id="contextIconBox" class="w-10 h-10 rounded-xl bg-slate-200 text-slate-600 flex items-center justify-center text-xl shrink-0 transition-colors">
             <i id="contextIcon" class="fa-solid fa-book-open"></i>
           </div>
           <div>
-            <div class="text-xs text-slate-400 font-bold uppercase">適合使用的場景</div>
-            <div id="contextText" class="text-slate-800 font-bold text-base md:text-lg">閱讀圖書、書寫、聆聽別人說話時</div>
+            <div class="text-[11px] text-slate-400 font-bold uppercase">適合使用的場景</div>
+            <div id="contextText" class="text-slate-800 font-bold text-sm md:text-base leading-tight">閱讀圖書、書寫、聆聽別人說話時</div>
           </div>
         </div>
 
       </div>
     </div>
 
-    <!-- 音量控制調整面板 -->
-    <div class="w-full bg-slate-50/90 rounded-2xl p-6 border border-slate-200">
+    <!-- 下半部：三角形滑桿及快速點選按鈕面板 -->
+    <div class="w-full bg-slate-50/90 rounded-2xl p-3 md:p-4 border border-slate-200 shrink-0">
       
       <!-- 控制列頂部 -->
-      <div class="flex items-center justify-between mb-3">
-        <span class="text-sm font-bold text-slate-600 flex items-center gap-2">
+      <div class="flex items-center justify-between mb-2">
+        <span class="text-xs md:text-sm font-bold text-slate-600 flex items-center gap-1.5">
           <i class="fa-solid fa-hand-pointer text-sky-500"></i> 請滑動三角形音量條或直接點選數字：
         </span>
-        <!-- 音效切換 -->
-        <button id="soundToggleBtn" class="text-xs bg-white hover:bg-slate-100 text-slate-600 px-3.5 py-1.5 rounded-full border border-slate-300 font-bold transition flex items-center gap-2 shadow-sm">
-          <i class="fa-solid fa-bell text-sky-500"></i> 音效提示開
+        <!-- 音效切換按鈕 -->
+        <button id="soundToggleBtn" class="text-xs bg-white hover:bg-slate-100 text-slate-600 px-3 py-1 rounded-full border border-slate-300 font-bold transition flex items-center gap-1.5 shadow-sm">
+          <i class="fa-solid fa-bell text-sky-500"></i> 音效開
         </button>
       </div>
 
       <!-- 直角三角形音量滑桿容器 -->
-      <div class="px-2 mb-6">
+      <div class="px-1 mb-2.5">
         <div class="triangle-container" id="triangleContainer">
           <!-- 灰色底座直角三角形 -->
           <div class="triangle-bg"></div>
@@ -235,7 +265,7 @@
             <div id="triangleFill" class="triangle-fill"></div>
           </div>
 
-          <!-- 精確對齊色塊邊界的自訂圓形滑塊 -->
+          <!-- 精確對齊色塊邊界的圓形滑塊 -->
           <div id="customThumb" class="custom-slider-thumb"></div>
 
           <!-- 透明滑動互動層 -->
@@ -251,37 +281,37 @@
         </div>
 
         <!-- 輔助說明標籤 -->
-        <div class="flex justify-between items-center text-xs font-bold text-slate-400 mt-1 px-1">
+        <div class="flex justify-between items-center text-[11px] font-bold text-slate-400 mt-1 px-1">
           <span>🔇 保持安靜 (0)</span>
           <span>呼救最響亮 (5) 📢</span>
         </div>
       </div>
 
       <!-- 快速點選按鈕矩陣 (0 ~ 5) -->
-      <div class="grid grid-cols-6 gap-2 md:gap-3">
-        <button onclick="changeLevel(0)" class="level-btn py-2.5 px-1 rounded-2xl text-center border-2 transition-all duration-200 flex flex-col items-center gap-1 shadow-sm" data-level="0">
-          <span class="text-xl font-black">0</span>
-          <span class="text-xs font-bold truncate max-w-full">保持安靜</span>
+      <div class="grid grid-cols-6 gap-1.5 md:gap-3">
+        <button onclick="changeLevel(0)" class="level-btn py-1.5 md:py-2 px-1 rounded-xl text-center border-2 transition-all duration-200 flex flex-col items-center shadow-sm" data-level="0">
+          <span class="text-lg md:text-xl font-black leading-none">0</span>
+          <span class="text-[11px] font-bold truncate max-w-full mt-0.5">保持安靜</span>
         </button>
-        <button onclick="changeLevel(1)" class="level-btn py-2.5 px-1 rounded-2xl text-center border-2 transition-all duration-200 flex flex-col items-center gap-1 shadow-sm" data-level="1">
-          <span class="text-xl font-black">1</span>
-          <span class="text-xs font-bold truncate max-w-full">說秘密</span>
+        <button onclick="changeLevel(1)" class="level-btn py-1.5 md:py-2 px-1 rounded-xl text-center border-2 transition-all duration-200 flex flex-col items-center shadow-sm" data-level="1">
+          <span class="text-lg md:text-xl font-black leading-none">1</span>
+          <span class="text-[11px] font-bold truncate max-w-full mt-0.5">說秘密</span>
         </button>
-        <button onclick="changeLevel(2)" class="level-btn py-2.5 px-1 rounded-2xl text-center border-2 transition-all duration-200 flex flex-col items-center gap-1 shadow-sm" data-level="2">
-          <span class="text-xl font-black">2</span>
-          <span class="text-xs font-bold truncate max-w-full">身旁的人</span>
+        <button onclick="changeLevel(2)" class="level-btn py-1.5 md:py-2 px-1 rounded-xl text-center border-2 transition-all duration-200 flex flex-col items-center shadow-sm" data-level="2">
+          <span class="text-lg md:text-xl font-black leading-none">2</span>
+          <span class="text-[11px] font-bold truncate max-w-full mt-0.5">身旁的人</span>
         </button>
-        <button onclick="changeLevel(3)" class="level-btn py-2.5 px-1 rounded-2xl text-center border-2 transition-all duration-200 flex flex-col items-center gap-1 shadow-sm" data-level="3">
-          <span class="text-xl font-black">3</span>
-          <span class="text-xs font-bold truncate max-w-full">室內較遠</span>
+        <button onclick="changeLevel(3)" class="level-btn py-1.5 md:py-2 px-1 rounded-xl text-center border-2 transition-all duration-200 flex flex-col items-center shadow-sm" data-level="3">
+          <span class="text-lg md:text-xl font-black leading-none">3</span>
+          <span class="text-[11px] font-bold truncate max-w-full mt-0.5">室內較遠</span>
         </button>
-        <button onclick="changeLevel(4)" class="level-btn py-2.5 px-1 rounded-2xl text-center border-2 transition-all duration-200 flex flex-col items-center gap-1 shadow-sm" data-level="4">
-          <span class="text-xl font-black">4</span>
-          <span class="text-xs font-bold truncate max-w-full">室外玩耍</span>
+        <button onclick="changeLevel(4)" class="level-btn py-1.5 md:py-2 px-1 rounded-xl text-center border-2 transition-all duration-200 flex flex-col items-center shadow-sm" data-level="4">
+          <span class="text-lg md:text-xl font-black leading-none">4</span>
+          <span class="text-[11px] font-bold truncate max-w-full mt-0.5">室外玩耍</span>
         </button>
-        <button onclick="changeLevel(5)" class="level-btn py-2.5 px-1 rounded-2xl text-center border-2 transition-all duration-200 flex flex-col items-center gap-1 shadow-sm" data-level="5">
-          <span class="text-xl font-black">5</span>
-          <span class="text-xs font-bold truncate max-w-full">求救</span>
+        <button onclick="changeLevel(5)" class="level-btn py-1.5 md:py-2 px-1 rounded-xl text-center border-2 transition-all duration-200 flex flex-col items-center shadow-sm" data-level="5">
+          <span class="text-lg md:text-xl font-black leading-none">5</span>
+          <span class="text-[11px] font-bold truncate max-w-full mt-0.5">求救</span>
         </button>
       </div>
 
@@ -432,7 +462,7 @@
       contextIconBox.style.backgroundColor = data.lightBg;
       contextIconBox.style.color = data.themeColor;
 
-      // 1 號圖形定點定為 25%，其餘維持對應比例
+      // 1 號定點右移 5% (25%)，其餘維持對應比例
       const fillPercentageMap = [0, 25, 40, 60, 80, 100];
       const percent = fillPercentageMap[lvl];
       const rightInset = 100 - percent;
@@ -440,31 +470,29 @@
       const slider = document.getElementById('volumeRange');
       slider.value = lvl;
       
-      // 裁切彩色三角形
       const fillWrapper = document.getElementById('triangleFillWrapper');
       fillWrapper.style.clipPath = `inset(0 ${rightInset}% 0 0)`;
 
       const triangleFill = document.getElementById('triangleFill');
       triangleFill.style.backgroundColor = data.themeColor;
 
-      // 圓形滑塊正中心精確對準彩色三角形右邊緣：left = calc(percent% - 22px)
+      // 圓形滑塊中心點對齊彩色三角形右邊界
       const customThumb = document.getElementById('customThumb');
       if (lvl === 0) {
         customThumb.style.left = '0px';
       } else if (lvl === 5) {
-        customThumb.style.left = 'calc(100% - 44px)';
+        customThumb.style.left = 'calc(100% - 40px)';
       } else {
-        customThumb.style.left = `calc(${percent}% - 22px)`;
+        customThumb.style.left = `calc(${percent}% - 20px)`;
       }
 
-      // 更新按鈕狀態
       document.querySelectorAll('.level-btn').forEach(btn => {
         const btnLvl = parseInt(btn.getAttribute('data-level'));
         if (btnLvl === lvl) {
           btn.style.backgroundColor = data.themeColor;
           btn.style.borderColor = data.themeColor;
           btn.style.color = '#ffffff';
-          btn.style.transform = 'scale(1.06)';
+          btn.style.transform = 'scale(1.05)';
         } else {
           btn.style.backgroundColor = '#ffffff';
           btn.style.borderColor = '#e2e8f0';
@@ -488,10 +516,10 @@
     soundToggleBtn.addEventListener('click', () => {
       isSoundOn = !isSoundOn;
       if (isSoundOn) {
-        soundToggleBtn.innerHTML = '<i class="fa-solid fa-bell text-sky-500"></i> 音效提示開';
+        soundToggleBtn.innerHTML = '<i class="fa-solid fa-bell text-sky-500"></i> 音效開';
         soundToggleBtn.classList.remove('opacity-60');
       } else {
-        soundToggleBtn.innerHTML = '<i class="fa-solid fa-bell-slash text-slate-400"></i> 音效已靜音';
+        soundToggleBtn.innerHTML = '<i class="fa-solid fa-bell-slash text-slate-400"></i> 已靜音';
         soundToggleBtn.classList.add('opacity-60');
       }
     });
